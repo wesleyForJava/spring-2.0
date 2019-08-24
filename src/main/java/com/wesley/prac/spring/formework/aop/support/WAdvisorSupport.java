@@ -59,73 +59,58 @@ public class WAdvisorSupport {
                 .replaceAll("\\\\.\\*",".*")
                 .replaceAll("\\(","\\\\(")
                 .replaceAll("\\)","\\\\)");
-//        pointCut=public .* com.wesley.prac.spring.demo.service..*Service..*(.*)
+
+
+//      // pointCut=public .* com.wesley.prac.spring.demo.service..*Service..*(.*)
         String pointCutForClassRegex = pointCut.substring(0, pointCut.lastIndexOf("\\(") - 4);
         pointCutClassPattern= Pattern.compile("class"
                 +pointCutForClassRegex.substring(
                         pointCutForClassRegex.lastIndexOf(" ")+1));
-
-        Pattern compile = Pattern.compile(pointCut);
-        Map<String, Method> aspectMethods=null;
-        Class<?> aspectClass=null;
-        methodCache=new HashMap<Method, List<Object>>();
         try {
-            aspectClass = Class.forName(config.getAspectClass());
-             aspectMethods = new HashMap<String, Method>();
+            methodCache=new HashMap<Method, List<Object>>();
+            Pattern compile = Pattern.compile(pointCut);
+            Class<?> aspectClass = Class.forName(config.getAspectClass());
+            Map<String, Method>    aspectMethods = new HashMap<String, Method>();
 
             for (Method method : aspectClass.getMethods()) {
                aspectMethods.put(method.getName(),method);
             }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+
         //把每个方法都包装成MethodInteceptor
         for (Method method : this.getTargetClass().getMethods()) {
 
             String methodString = method.toString();
             if (methodString.contains("throws")) {
-                methodString = methodString.substring(0, methodString.indexOf("throws")).trim();
+                methodString = methodString.substring(0, methodString.lastIndexOf("throws")).trim();
             }
             Matcher matcher = compile.matcher(methodString);
 
             if (matcher.matches()) {
+                //执行器链
                 LinkedList<Object> advices = new LinkedList<Object>();
                 //before
                 if (!(config.getAspectBefore().equals("")||config.getAspectBefore()==null)) {
                     //创建一个advice对象
-                    try {
                         advices.add(new WMethodBeforeAdviceInteceptor(aspectMethods.get(config.getAspectBefore()),aspectClass.newInstance()));
-                    } catch (InstantiationException e) {
-                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
+
                 }
                 //after
                 if (!(config.getAspectAfter()==null || config.getAspectAfter().equals(""))) {
-                    try {
                         advices.add(new AfterReturingAdviceInteceptor(aspectMethods.get(config.getAspectAfter()),aspectClass.newInstance()));
-                    } catch (InstantiationException e) {
-                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
-
                 }
                 //throw
                 if (!(config.getAspectAfterThrow()==null || config.getAspectAfterThrow().equals(""))) {
-                    try {
-                        AfterThowingAdviceInteceptor thowingAdvice = new AfterThowingAdviceInteceptor(aspectMethods.get(config.getAspectAfterThrow()), aspectClass.newInstance());
+                        AfterThowingAdviceInteceptor thowingAdvice = new
+                                AfterThowingAdviceInteceptor(aspectMethods.get(config.getAspectAfterThrow()), aspectClass.newInstance());
                         thowingAdvice.setThrowName(config.getAspectAfterThrowingName());
                         advices.add(thowingAdvice);
-                    } catch (InstantiationException e) {
-                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
                 }
+
                 methodCache.put(method,advices);
             }
+        }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
     public void setTarget(Object target) {

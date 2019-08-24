@@ -24,15 +24,16 @@ public class WJDKDynamicAopProxy implements WAopProxy,InvocationHandler {
 
     @Override
     public Object getProxy(ClassLoader classLoader) {
-        Proxy.newProxyInstance(classLoader,this.advisored.getTargetClass().getInterfaces(),this);
-        return null;
+        return  Proxy.newProxyInstance(classLoader,this.advisored.getTargetClass().getInterfaces(),this);
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        List<Object> interceptorsAndDynamicInterceptionAdvice = this.advisored.getInterceptorsAndDynamicInterceptionAdvice(method, this.advisored.getTargetClass());
+        List<Object> interceptorsAndDynamicInterceptionAdvice =
+                this.advisored.getInterceptorsAndDynamicInterceptionAdvice
+                        (method, this.advisored.getTargetClass());
         WReflectiveMethodInvocation methodInvocation=
-                new WReflectiveMethodInvocation(proxy,null,
+                new WReflectiveMethodInvocation(proxy,this.advisored.getTarget(),
                         method,args,this.advisored.getTargetClass(),
                         interceptorsAndDynamicInterceptionAdvice);
 

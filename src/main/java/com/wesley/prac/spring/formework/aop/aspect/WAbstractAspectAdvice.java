@@ -17,15 +17,15 @@ public abstract class WAbstractAspectAdvice implements WAdvice{
     public  Object invokeAdviceMethod(WJoinPiont joinPiont,Object returnValue,Throwable tx) throws InvocationTargetException, IllegalAccessException {
         Class<?>[] parameterTypes = this.aspectMethod.getParameterTypes();
         if (parameterTypes==null || parameterTypes.length==0) {
-               return aspectMethod.invoke(target, null);
+               return aspectMethod.invoke(target);
         }else {
             Object[] args = new Object[parameterTypes.length];
             for (int i = 0; i < parameterTypes.length; i++) {
-                if (parameterTypes[i].equals(WJoinPiont.class)) {
+                if (parameterTypes[i]==WJoinPiont.class) {
                     args[i]=joinPiont;
-                }else if (parameterTypes[i].equals(Throwable.class)){
+                }else if (parameterTypes[i]== Throwable.class){
                     args[i]=tx;
-                }else if(parameterTypes[i].equals(Object.class)){
+                }else if(parameterTypes[i]== Object.class){
                     args[i]=returnValue;
                 }
             }

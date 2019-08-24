@@ -19,7 +19,7 @@ public class AfterReturingAdviceInteceptor extends WAbstractAspectAdvice impleme
         this.joinPiont=methodInvocation;
         Object retVal = methodInvocation.proceed();
         this.afterReturn(retVal,methodInvocation.getMethod(),methodInvocation.arguments(),methodInvocation.getThis());
-        return null;
+        return retVal;
     }
 
     public  void afterReturn(Object retVal, Method method, Object[] arguments, Object aThis){
