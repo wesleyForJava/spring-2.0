@@ -1,5 +1,10 @@
 package com.wesley.prac.spring.formework.context;
 
+import com.wesley.prac.spring.formework.aop.WAopProxy;
+import com.wesley.prac.spring.formework.aop.WCglibAopProxy;
+import com.wesley.prac.spring.formework.aop.WJDKDynamicAopProxy;
+import com.wesley.prac.spring.formework.aop.config.WAopConfig;
+import com.wesley.prac.spring.formework.aop.support.WAdvisorSupport;
 import com.wesley.prac.spring.formework.beans.GPBeanWrapper;
 import com.wesley.prac.spring.formework.beans.config.WBeanDefinition;
 import com.wesley.prac.spring.formework.beans.config.WBeanPostProcessor;
@@ -104,6 +109,10 @@ public class WApplicationContext extends WDefaultListableBeanFactory implements 
         //3、把这个对象封装到BeanWrapper中
         GPBeanWrapper beanWrapper = new GPBeanWrapper(instance);
 
+        //创建一个代理的策略，看是用cglib还是jdk
+//        WAopProxy
+//        createProxy();
+
         //singletonObjects
 
         //factoryBeanInstanceCache
@@ -182,6 +191,13 @@ public class WApplicationContext extends WDefaultListableBeanFactory implements 
             }else {
                 Class<?> clazz = Class.forName(className);
                 instance = clazz.newInstance();
+                WAdvisorSupport config= instantionAopConfig(wBeanDefinition);
+                config.setTargetClass(clazz);
+                config.setTarget(instance);
+                //如果符合PointCut的规则的话，就创建代理对象
+                if(config.pointCutMatch()){
+                    instance=createWAopProxy(config).getProxy();
+                }
                 this.factoryBeanObjectCache.put(className,instance);
                 this.factoryBeanObjectCache.put(wBeanDefinition.getFactoryBeanName(),instance);
             }
@@ -190,6 +206,25 @@ public class WApplicationContext extends WDefaultListableBeanFactory implements 
         }
 
         return instance;
+    }
+
+    private WAopProxy createWAopProxy(WAdvisorSupport config) {
+        Class<?> targetClass = config.getTargetClass();
+        if (targetClass.getInterfaces().length>0) {
+            return new WJDKDynamicAopProxy(config);
+        }
+        return new WCglibAopProxy(config);
+    }
+
+    private WAdvisorSupport instantionAopConfig(WBeanDefinition wBeanDefinition) {
+        WAopConfig config= new WAopConfig();
+        config.setPointCut(this.reader.getConfig().getProperty("pointCut"));
+        config.setAspectBefore(this.reader.getConfig().getProperty("aspectBefore"));
+        config.setAspectClass(this.reader.getConfig().getProperty("aspectClass"));
+        config.setAspectAfter(this.reader.getConfig().getProperty("aspectAfter"));
+        config.setAspectAfterThrow(this.reader.getConfig().getProperty("aspectAfterThrow"));
+        config.setAspectAfterThrowingName(this.reader.getConfig().getProperty("aspectAfterThrowingName"));
+        return new WAdvisorSupport(config);
     }
 
     public String[] getBeanDefinitionNames() {
